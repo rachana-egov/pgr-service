@@ -145,7 +145,7 @@ public class PGRService {
         workflowService.updateWorkflowStatus(request);
 
         // Push the updated complaint to kafka
-        producer.push(config.getUpdateTopic(),request);
+        producer.push(config.getUpdateTopic(),request.getPgrEntity());
 
         // Return the updated complaint
         return request;
