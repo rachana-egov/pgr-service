@@ -33,14 +33,14 @@ public class EnrichmentService {
 
     private PGRConfiguration config;
 
-   // private UserService userService;
+    private UserService userService;
 
     @Autowired
-    public EnrichmentService(PGRUtils utils, IdGenRepository idGenRepository, PGRConfiguration config) {
+    public EnrichmentService(PGRUtils utils, IdGenRepository idGenRepository, PGRConfiguration config, UserService userService) {
         this.utils = utils;
         this.idGenRepository = idGenRepository;
         this.config = config;
-       // this.userService = userService;
+        this.userService = userService;
     }
 
 
@@ -59,7 +59,7 @@ public class EnrichmentService {
         if(requestInfo.getUserInfo().getType().equalsIgnoreCase(USERTYPE_CITIZEN))
             serviceRequest.getPgrEntity().getService().setAccountId(requestInfo.getUserInfo().getUuid());
 
-       // userService.callUserService(serviceRequest);
+        userService.callUserService(serviceRequest);
 
 
         AuditDetails auditDetails = utils.getAuditDetails(requestInfo.getUserInfo().getUuid(), service,true);
@@ -68,21 +68,13 @@ public class EnrichmentService {
         service.setId(UUID.randomUUID().toString());
         service.getAddress().setId(UUID.randomUUID().toString());
         service.getAddress().setTenantId(tenantId);
-        //service.setActive(true);
-
-//        if(workflow.getVerificationDocuments()!=null){
-//            workflow.getVerificationDocuments().forEach(document -> {
-//                document.setId(UUID.randomUUID().toString());
-//            });
-//        }
 
         if(StringUtils.isEmpty(service.getAccountId()))
             service.setAccountId(service.getCitizen().getUuid());
 
-       // List<String> customIds = getIdList(requestInfo,tenantId,config.getServiceRequestIdGenName(),config.getServiceRequestIdGenFormat(),1);
-///  comment as i/0o issue is coming on idget
-        //service.setServiceRequestId(customIds.get(0));
-service.setServiceRequestId(UUID.randomUUID().toString());
+        List<String> customIds = getIdList(requestInfo,tenantId,config.getServiceRequestIdGenName(),config.getServiceRequestIdGenFormat(),1);
+
+        service.setServiceRequestId(customIds.get(0));
 
     }
 
@@ -91,16 +83,16 @@ service.setServiceRequestId(UUID.randomUUID().toString());
      * Enriches the update request (updates the lastModifiedTime in auditDetails0
      * @param serviceRequest The update request
      */
-//    public void enrichUpdateRequest(ServiceRequest serviceRequest){
-//
-//        RequestInfo requestInfo = serviceRequest.getRequestInfo();
-//        Service service = serviceRequest.getService();
-//        AuditDetails auditDetails = utils.getAuditDetails(requestInfo.getUserInfo().getUuid(), service,false);
-//
-//        service.setAuditDetails(auditDetails);
-//
-//        userService.callUserService(serviceRequest);
-//    }
+    public void enrichUpdateRequest(ServiceRequest serviceRequest){
+
+        RequestInfo requestInfo = serviceRequest.getRequestInfo();
+        Service service = serviceRequest.getPgrEntity().getService();
+        AuditDetails auditDetails = utils.getAuditDetails(requestInfo.getUserInfo().getUuid(), service,false);
+
+        service.setAuditDetails(auditDetails);
+
+        userService.callUserService(serviceRequest);
+    }
 
     /**
      * Enriches the search criteria in case of default search and enriches the userIds from mobileNumber in case of seach based on mobileNumber.

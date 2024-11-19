@@ -38,18 +38,18 @@ public class PGRUtils {
      * @param query
      * @param tenantId
      * @return
-//     */
-//    public String replaceSchemaPlaceholder(String query, String tenantId) {
-//
-//        String finalQuery = null;
-//
-//        try {
-//            finalQuery = multiStateInstanceUtil.replaceSchemaPlaceholder(query, tenantId);
-//        }
-//        catch (Exception e){
-//            throw new CustomException("INVALID_TENANTID","Invalid tenantId: "+tenantId);
-//        }
-//        return finalQuery;
-//    }
+     */
+    public String replaceSchemaPlaceholder(String query, String tenantId) {
+
+        String finalQuery = null;
+
+        try {
+            finalQuery = query.replace("{schema}.", "");
+        }
+        catch (Exception e){
+            throw new CustomException("INVALID_TENANTID","Invalid tenantId: "+tenantId);
+        }
+        return finalQuery;
+    }
 
 }

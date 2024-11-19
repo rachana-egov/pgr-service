@@ -182,15 +182,15 @@ public class PGRConfiguration {
 
 
     //Allowed Search Parameters
-//    @Value("${citizen.allowed.search.params}")
-//    private String allowedCitizenSearchParameters;
-//
-//    @Value("${employee.allowed.search.params}")
-//    private String allowedEmployeeSearchParameters;
+    @Value("${citizen.allowed.search.params}")
+    private String allowedCitizenSearchParameters;
 
-//    //Sources
-//    @Value("${allowed.source}")
-//    private String allowedSource;
+    @Value("${employee.allowed.search.params}")
+    private String allowedEmployeeSearchParameters;
+
+    //Sources
+    @Value("${allowed.source}")
+    private String allowedSource;
 
 
     // Migration

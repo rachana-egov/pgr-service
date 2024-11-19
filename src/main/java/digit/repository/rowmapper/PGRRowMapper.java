@@ -2,10 +2,7 @@ package digit.repository.rowmapper;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import digit.web.models.Address;
-import digit.web.models.Boundary;
-import digit.web.models.GeoLocation;
-import digit.web.models.Service;
+import digit.web.models.*;
 import org.egov.common.contract.models.AuditDetails;
 import org.egov.tracer.model.CustomException;
 import org.postgresql.util.PGobject;
@@ -40,7 +37,6 @@ public class PGRRowMapper implements ResultSetExtractor<List<Service>> {
             String id = rs.getString("ser_id");
             Service currentService = serviceMap.get(id);
             String tenantId = rs.getString("ser_tenantId");
-            Boolean active = rs.getBoolean("active");
 
             if(currentService == null){
 
@@ -55,8 +51,7 @@ public class PGRRowMapper implements ResultSetExtractor<List<Service>> {
                 Long createdtime = rs.getLong("ser_createdtime");
                 String lastmodifiedby = rs.getString("ser_lastmodifiedby");
                 Long lastmodifiedtime = rs.getLong("ser_lastmodifiedtime");
-                Integer rating = rs.getInt("rating");
-                if(rs.wasNull()){rating = null;}
+
 
                 AuditDetails auditDetails = AuditDetails.builder().createdBy(createdby).createdTime(createdtime)
                         .lastModifiedBy(lastmodifiedby).lastModifiedTime(lastmodifiedtime).build();
@@ -117,10 +112,10 @@ public class PGRRowMapper implements ResultSetExtractor<List<Service>> {
                     .geoLocation(geoLocation)
                     .build();
 
-//            JsonNode additionalDetails = getAdditionalDetail("ads_additionaldetails",rs);
-//
-//            if(additionalDetails != null)
-//                address.setAdditionDetails(additionalDetails);
+            JsonNode additionalDetails = getAdditionalDetail("ads_additionaldetails",rs);
+
+            if(additionalDetails != null)
+                address.setAdditionDetails(additionalDetails);
 
             service.setAddress(address);
 

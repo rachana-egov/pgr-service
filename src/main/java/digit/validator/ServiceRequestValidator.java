@@ -2,16 +2,25 @@ package digit.validator;
 
 import com.jayway.jsonpath.JsonPath;
 import digit.config.PGRConfiguration;
+import digit.repository.PGRRepository;
 import digit.repository.ServiceRequestRepository;
+import digit.util.HRMSUtil;
+import digit.web.models.PGREntity;
 import digit.web.models.RequestSearchCriteria;
+import digit.web.models.ServiceRequest;
 import org.egov.common.contract.request.RequestInfo;
+import org.egov.common.contract.request.User;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import static digit.util.PGRConstants.*;
 import org.springframework.util.StringUtils;
 
 import java.util.*;
+
+import static digit.util.PGRConstants.MDMS_SERVICEDEF_SEARCH;
+import static digit.util.PGRConstants.USERTYPE_EMPLOYEE;
 
 
 @Component
@@ -20,15 +29,15 @@ public class ServiceRequestValidator {
 
     private PGRConfiguration config;
 
-    private ServiceRequestRepository repository;
+    private PGRRepository repository;
 
-    //private HRMSUtil hrmsUtil;
+    private HRMSUtil hrmsUtil;
 
     @Autowired
-    public ServiceRequestValidator(PGRConfiguration config, ServiceRequestRepository repository) {
+    public ServiceRequestValidator(PGRConfiguration config, PGRRepository repository, HRMSUtil hrmsUtil) {
         this.config = config;
         this.repository = repository;
-        //this.hrmsUtil = hrmsUtil;
+        this.hrmsUtil = hrmsUtil;
     }
 
 
@@ -37,15 +46,15 @@ public class ServiceRequestValidator {
      * @param request Request for creating the complaint
      * @param mdmsData The master data for pgr
      */
-//    public void validateCreate(ServiceRequest request, Object mdmsData){
-//        Map<String,String> errorMap = new HashMap<>();
-//        validateUserData(request,errorMap);
-//        validateSource(request.getService().getSource());
-//        validateMDMS(request, mdmsData);
-//        validateDepartment(request, mdmsData);
-//        if(!errorMap.isEmpty())
-//            throw new CustomException(errorMap);
-//    }
+    public void validateCreate(ServiceRequest request, Object mdmsData){
+        Map<String,String> errorMap = new HashMap<>();
+        validateUserData(request,errorMap);
+        validateSource(request.getPgrEntity().getService().getSource());
+        validateMDMS(request, mdmsData);
+        validateDepartment(request, mdmsData);
+        if(!errorMap.isEmpty())
+            throw new CustomException(errorMap);
+    }
 
 
     /**
@@ -53,54 +62,44 @@ public class ServiceRequestValidator {
      * @param request The request to update complaint
      * @param mdmsData The master data for pgr
      */
-//    public void validateUpdate(ServiceRequest request, Object mdmsData){
-//
-//        String id = request.getService().getId();
-//        String tenantId = request.getService().getTenantId();
-//        validateSource(request.getService().getSource());
-//        validateMDMS(request, mdmsData);
-//        validateDepartment(request, mdmsData);
-//        validateReOpen(request);
-//        RequestSearchCriteria criteria = RequestSearchCriteria.builder().ids(Collections.singleton(id)).tenantId(tenantId).build();
-//        criteria.setIsPlainSearch(false);
-//        List<ServiceWrapper> serviceWrappers = repository.getServiceWrappers(criteria);
-//
-//        if(CollectionUtils.isEmpty(serviceWrappers))
-//            throw new CustomException("INVALID_UPDATE","The record that you are trying to update does not exists");
-//
-//        // TO DO
-//
-//    }
+    public void validateUpdate(ServiceRequest request, Object mdmsData){
+
+        String id = request.getPgrEntity().getService().getId();
+        String tenantId = request.getPgrEntity().getService().getTenantId();
+        validateSource(request.getPgrEntity().getService().getSource());
+        validateMDMS(request, mdmsData);
+        validateDepartment(request, mdmsData);
+        //validateReOpen(request);
+        RequestSearchCriteria criteria = RequestSearchCriteria.builder().ids(Collections.singleton(id)).tenantId(tenantId).build();
+        criteria.setIsPlainSearch(false);
+        List<PGREntity> serviceWrappers = repository.getServiceWrappers(criteria);
+
+        if(CollectionUtils.isEmpty(serviceWrappers))
+            throw new CustomException("INVALID_UPDATE","The record that you are trying to update does not exists");
+
+        // TO DO
+
+    }
 
     /**
      * Validates the user related data in the complaint
      * @param request The request of creating/updating complaint
      * @param errorMap HashMap to capture any errors
      */
-//    private void validateUserData(ServiceRequest request,Map<String, String> errorMap){
-//
-//        RequestInfo requestInfo = request.getRequestInfo();
-//        String accountId = request.getService().getAccountId();
-//
-//        /*if(requestInfo.getUserInfo().getType().equalsIgnoreCase(USERTYPE_CITIZEN)
-//            && StringUtils.isEmpty(accountId)){
-//            errorMap.put("INVALID_REQUEST","AccountId cannot be null");
-//        }
-//        else if(requestInfo.getUserInfo().getType().equalsIgnoreCase(USERTYPE_CITIZEN)
-//                && !StringUtils.isEmpty(accountId)
-//                && !accountId.equalsIgnoreCase(requestInfo.getUserInfo().getUuid())){
-//            errorMap.put("INVALID_ACCOUNTID","The accountId is different from the user logged in");
-//        }*/
-//
-//        if(requestInfo.getUserInfo().getType().equalsIgnoreCase(USERTYPE_EMPLOYEE)){
-//            User citizen = request.getService().getCitizen();
-//            if(citizen == null)
-//                errorMap.put("INVALID_REQUEST","Citizen object cannot be null");
-//            else if(citizen.getMobileNumber()==null || citizen.getName()==null)
-//                errorMap.put("INVALID_REQUEST","Name and Mobile Number is mandatory in citizen object");
-//        }
-//
-//    }
+    private void validateUserData(ServiceRequest request,Map<String, String> errorMap){
+
+        RequestInfo requestInfo = request.getRequestInfo();
+        String accountId = request.getPgrEntity().getService().getAccountId();
+
+        if(requestInfo.getUserInfo().getType().equalsIgnoreCase(USERTYPE_EMPLOYEE)){
+            User citizen = request.getPgrEntity().getService().getCitizen();
+            if(citizen == null)
+                errorMap.put("INVALID_REQUEST","Citizen object cannot be null");
+            else if(citizen.getMobileNumber()==null || citizen.getName()==null)
+                errorMap.put("INVALID_REQUEST","Name and Mobile Number both are mandatory in citizen object");
+        }
+
+    }
 
 
     /**
@@ -108,25 +107,25 @@ public class ServiceRequestValidator {
      * @param request The request of creating/updating complaint
      * @param mdmsData The master data for pgr
      */
-//    private void validateMDMS(ServiceRequest request, Object mdmsData){
-//
-//        String serviceCode = request.getService().getServiceCode();
-//        String jsonPath = MDMS_SERVICEDEF_SEARCH.replace("{SERVICEDEF}",serviceCode);
-//
-//        List<Object> res = null;
-//
-//        try{
-//            res = JsonPath.read(mdmsData,jsonPath);
-//        }
-//        catch (Exception e){
-//            throw new CustomException("JSONPATH_ERROR","Failed to parse mdms response");
-//        }
-//
-//        if(CollectionUtils.isEmpty(res))
-//            throw new CustomException("INVALID_SERVICECODE","The service code: "+serviceCode+" is not present in MDMS");
-//
-//
-//    }
+    private void validateMDMS(ServiceRequest request, Object mdmsData){
+
+        String serviceCode = request.getPgrEntity().getService().getServiceCode();
+        String jsonPath = MDMS_SERVICEDEF_SEARCH.replace("{SERVICEDEF}",serviceCode);
+
+        List<Object> res = null;
+
+        try{
+            res = JsonPath.read(mdmsData,jsonPath);
+        }
+        catch (Exception e){
+            throw new CustomException("JSONPATH_ERROR","Failed to parse mdms response");
+        }
+
+        if(CollectionUtils.isEmpty(res))
+            throw new CustomException("INVALID_SERVICECODE","The service code: "+serviceCode+" is not present in MDMS");
+
+
+    }
 
 
     /**
@@ -134,67 +133,67 @@ public class ServiceRequestValidator {
      * @param request
      * @param mdmsData
      */
-//    private void validateDepartment(ServiceRequest request, Object mdmsData){
-//
-//        String serviceCode = request.getService().getServiceCode();
-//        List<String> assignes = request.getWorkflow().getAssignes();
-//
-//        if(CollectionUtils.isEmpty(assignes))
-//            return;
-//
-//        List<String> departments = hrmsUtil.getDepartment(assignes, request.getRequestInfo());
-//
-//        String jsonPath = MDMS_DEPARTMENT_SEARCH.replace("{SERVICEDEF}",serviceCode);
-//
-//        List<String> res = null;
-//        String departmentFromMDMS;
-//
-//        try{
-//            res = JsonPath.read(mdmsData,jsonPath);
-//        }
-//        catch (Exception e){
-//            throw new CustomException("JSONPATH_ERROR","Failed to parse mdms response for department");
-//        }
-//
-//        if(CollectionUtils.isEmpty(res))
-//            throw new CustomException("PARSING_ERROR","Failed to fetch department from mdms data for serviceCode: "+serviceCode);
-//        else departmentFromMDMS = res.get(0);
-//
-//        Map<String, String> errorMap = new HashMap<>();
-//
-//        if(!departments.contains(departmentFromMDMS))
-//            errorMap.put("INVALID_ASSIGNMENT","The application cannot be assigned to employee of department: "+departments.toString());
-//
-//
-//        if(!errorMap.isEmpty())
-//            throw new CustomException(errorMap);
-//
-//    }
+    private void validateDepartment(ServiceRequest request, Object mdmsData){
+
+        String serviceCode = request.getPgrEntity().getService().getServiceCode();
+        List<String> assignes = null;
+
+        if(CollectionUtils.isEmpty(assignes))
+            return;
+
+        List<String> departments = hrmsUtil.getDepartment(assignes, request.getRequestInfo());
+
+        String jsonPath = MDMS_DEPARTMENT_SEARCH.replace("{SERVICEDEF}",serviceCode);
+
+        List<String> res = null;
+        String departmentFromMDMS;
+
+        try{
+            res = JsonPath.read(mdmsData,jsonPath);
+        }
+        catch (Exception e){
+            throw new CustomException("JSONPATH_ERROR","Failed to parse mdms response for department");
+        }
+
+        if(CollectionUtils.isEmpty(res))
+            throw new CustomException("PARSING_ERROR","Failed to fetch department from mdms data for serviceCode: "+serviceCode);
+        else departmentFromMDMS = res.get(0);
+
+        Map<String, String> errorMap = new HashMap<>();
+
+        if(!departments.contains(departmentFromMDMS))
+            errorMap.put("INVALID_ASSIGNMENT","The application cannot be assigned to employee of department: "+departments.toString());
+
+
+        if(!errorMap.isEmpty())
+            throw new CustomException(errorMap);
+
+    }
 
 
     /**
      *
      * @param request
      */
-    private void validateReOpen(ServiceRequest request){
-
-        if(!request.getWorkflow().getAction().equalsIgnoreCase(PGR_WF_REOPEN))
-            return;
-
-
-        Service service = request.getService();
-        RequestInfo requestInfo = request.getRequestInfo();
-        Long lastModifiedTime = service.getAuditDetails().getLastModifiedTime();
-
-        if(requestInfo.getUserInfo().getType().equalsIgnoreCase(USERTYPE_CITIZEN)){
-            if(!requestInfo.getUserInfo().getUuid().equalsIgnoreCase(service.getAccountId()))
-                throw new CustomException("INVALID_ACTION","Not authorized to re-open the complain");
-        }
-
-        if(System.currentTimeMillis()-lastModifiedTime > config.getComplainMaxIdleTime())
-            throw new CustomException("INVALID_ACTION","Complaint is closed");
-
-    }
+//    private void validateReOpen(ServiceRequest request){
+//
+//        if(!request.getWorkflow().getAction().equalsIgnoreCase(PGR_WF_REOPEN))
+//            return;
+//
+//
+//        Service service = request.getService();
+//        RequestInfo requestInfo = request.getRequestInfo();
+//        Long lastModifiedTime = service.getAuditDetails().getLastModifiedTime();
+//
+//        if(requestInfo.getUserInfo().getType().equalsIgnoreCase(USERTYPE_CITIZEN)){
+//            if(!requestInfo.getUserInfo().getUuid().equalsIgnoreCase(service.getAccountId()))
+//                throw new CustomException("INVALID_ACTION","Not authorized to re-open the complain");
+//        }
+//
+//        if(System.currentTimeMillis()-lastModifiedTime > config.getComplainMaxIdleTime())
+//            throw new CustomException("INVALID_ACTION","Complaint is closed");
+//
+//    }
 
 
     /**

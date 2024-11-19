@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.service.PGRService;
 import digit.util.PGRConstants;
 import digit.util.ResponseInfoFactory;
-import digit.web.models.PGREntity;
-import digit.web.models.RequestSearchCriteria;
-import digit.web.models.ServiceRequest;
-import digit.web.models.ServiceResponse;
+import digit.web.models.*;
 import lombok.extern.slf4j.Slf4j;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.response.ResponseInfo;
@@ -61,38 +58,37 @@ public class RequestAPIController {
 
         String tenantId = criteria.getTenantId();
         List<PGREntity> serviceWrappers = pgrService.search(requestInfoWrapper.getRequestInfo(), criteria);
-        Map<String,Integer> dynamicData = pgrService.getDynamicData(tenantId);
+      //  Map<String,Integer> dynamicData = pgrService.getDynamicData(tenantId);
 
-        int complaintsResolved = dynamicData.get(PGRConstants.COMPLAINTS_RESOLVED);
-        int averageResolutionTime = dynamicData.get(PGRConstants.AVERAGE_RESOLUTION_TIME);
-        int complaintTypes = pgrService.getComplaintTypes();
+//        int complaintsResolved = dynamicData.get(PGRConstants.COMPLAINTS_RESOLVED);
+//        int averageResolutionTime = dynamicData.get(PGRConstants.AVERAGE_RESOLUTION_TIME);
+        //int complaintTypes = pgrService.getComplaintTypes();
 
         ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true);
-        ServiceResponse response = ServiceResponse.builder().responseInfo(responseInfo).serviceWrappers(serviceWrappers).complaintsResolved(complaintsResolved)
-                .averageResolutionTime(averageResolutionTime).complaintTypes(complaintTypes).build();
+        ServiceResponse response = ServiceResponse.builder().responseInfo(responseInfo).pgREntities(serviceWrappers).build();
         return new ResponseEntity<>(response, HttpStatus.OK);
 
     }
 
 
-//
-//    @RequestMapping(value="/request/_update", method = RequestMethod.POST)
-//    public ResponseEntity<ServiceResponse> requestsUpdatePost(@Valid @RequestBody ServiceRequest request) throws IOException {
-//        ServiceRequest enrichedReq = pgrService.update(request);
-//        ServiceWrapper serviceWrapper = ServiceWrapper.builder().service(enrichedReq.getService()).workflow(enrichedReq.getWorkflow()).build();
-//        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
-//        ServiceResponse response = ServiceResponse.builder().responseInfo(responseInfo).serviceWrappers(Collections.singletonList(serviceWrapper)).build();
-//        return new ResponseEntity<>(response, HttpStatus.OK);
-//    }
-//
-//    @RequestMapping(value="/request/_count", method = RequestMethod.POST)
-//    public ResponseEntity<CountResponse> requestsCountPost(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
-//                                                           @Valid @ModelAttribute RequestSearchCriteria criteria) {
-//        Integer count = pgrService.count(requestInfoWrapper.getRequestInfo(), criteria);
-//        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true);
-//        CountResponse response = CountResponse.builder().responseInfo(responseInfo).count(count).build();
-//        return new ResponseEntity<>(response, HttpStatus.OK);
-//
-//    }
+
+    @RequestMapping(value="/request/_update", method = RequestMethod.POST)
+    public ResponseEntity<ServiceResponse> requestsUpdatePost(@Valid @RequestBody ServiceRequest request) throws IOException {
+        ServiceRequest enrichedReq = pgrService.update(request);
+        PGREntity serviceWrapper = PGREntity.builder().service(enrichedReq.getPgrEntity().getService()).workflow(enrichedReq.getPgrEntity().getWorkflow()).build();
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(request.getRequestInfo(), true);
+        ServiceResponse response = ServiceResponse.builder().responseInfo(responseInfo).pgREntities(Collections.singletonList(serviceWrapper)).build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+    }
+
+    @RequestMapping(value="/request/_count", method = RequestMethod.POST)
+    public ResponseEntity<CountResponse> requestsCountPost(@Valid @RequestBody RequestInfoWrapper requestInfoWrapper,
+                                                           @Valid @ModelAttribute RequestSearchCriteria criteria) {
+        Integer count = pgrService.count(requestInfoWrapper.getRequestInfo(), criteria);
+        ResponseInfo responseInfo = responseInfoFactory.createResponseInfoFromRequestInfo(requestInfoWrapper.getRequestInfo(), true);
+        CountResponse response = CountResponse.builder().responseInfo(responseInfo).count(count).build();
+        return new ResponseEntity<>(response, HttpStatus.OK);
+
+    }
 
 }

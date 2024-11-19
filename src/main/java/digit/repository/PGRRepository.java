@@ -2,6 +2,7 @@ package digit.repository;
 
 import digit.repository.rowmapper.PGRQueryBuilder;
 import digit.repository.rowmapper.PGRRowMapper;
+import digit.util.PGRConstants;
 import digit.util.PGRUtils;
 import digit.web.models.PGREntity;
 import digit.web.models.RequestSearchCriteria;
@@ -57,7 +58,11 @@ public class PGRRepository {
         List<PGREntity> serviceWrappers = new ArrayList<>();
 
         for(Service service : services){
-            PGREntity serviceWrapper = PGREntity.builder().service(service).workflow(idToWorkflowMap.get(service.getServiceRequestId())).build();
+            Workflow workflow = idToWorkflowMap.get(service.getServiceRequestId());
+            if (workflow == null) {
+                workflow = new Workflow(); // or handle appropriately based on the business logic
+            }
+            PGREntity serviceWrapper = PGREntity.builder().service(service).workflow(workflow).build();
             serviceWrappers.add(serviceWrapper);
         }
         return serviceWrappers;
@@ -70,15 +75,8 @@ public class PGRRepository {
      */
     public List<Service> getServices(RequestSearchCriteria criteria) {
 
-        String tenantId = criteria.getTenantId();
         List<Object> preparedStmtList = new ArrayList<>();
         String query = queryBuilder.getPGRSearchQuery(criteria, preparedStmtList);
-        try {
-            query = utils.replaceSchemaPlaceholder(query, tenantId);
-        } catch (Exception e) {
-            throw new CustomException("PGR_UPDATE_ERROR",
-                    "TenantId length is not sufficient to replace query schema in a multi state instance");
-        }
         List<Service> services =  jdbcTemplate.query(query, preparedStmtList.toArray(), rowMapper);
         return services;
     }
@@ -107,22 +105,22 @@ public class PGRRepository {
     public Map<String, Integer> fetchDynamicData(String tenantId) {
         List<Object> preparedStmtListCompalintsResolved = new ArrayList<>();
         String query = queryBuilder.getResolvedComplaints(tenantId,preparedStmtListCompalintsResolved );
-        try {
-            query = utils.replaceSchemaPlaceholder(query, tenantId);
-        } catch (Exception e) {
-            throw new CustomException("PGR_SEARCH_ERROR",
-                    "TenantId length is not sufficient to replace query schema in a multi state instance");
-        }
+//        try {
+//            query = utils.replaceSchemaPlaceholder(query, tenantId);
+//        } catch (Exception e) {
+//            throw new CustomException("PGR_SEARCH_ERROR",
+//                    "TenantId length is not sufficient to replace query schema in a multi state instance");
+//        }
         int complaintsResolved = jdbcTemplate.queryForObject(query,preparedStmtListCompalintsResolved.toArray(),Integer.class);
 
         List<Object> preparedStmtListAverageResolutionTime = new ArrayList<>();
         query = queryBuilder.getAverageResolutionTime(tenantId, preparedStmtListAverageResolutionTime);
-        try {
-            query = utils.replaceSchemaPlaceholder(query, tenantId);
-        } catch (Exception e) {
-            throw new CustomException("PGR_SEARCH_ERROR",
-                    "TenantId length is not sufficient to replace query schema in a multi state instance");
-        }
+//        try {
+//            query = utils.replaceSchemaPlaceholder(query, tenantId);
+//        } catch (Exception e) {
+//            throw new CustomException("PGR_SEARCH_ERROR",
+//                    "TenantId length is not sufficient to replace query schema in a multi state instance");
+//        }
         int averageResolutionTime = jdbcTemplate.queryForObject(query, preparedStmtListAverageResolutionTime.toArray(),Integer.class);
 
         Map<String, Integer> dynamicData = new HashMap<String,Integer>();
