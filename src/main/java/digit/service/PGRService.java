@@ -87,29 +87,29 @@ public class PGRService {
 
         criteria.setIsPlainSearch(false);
 
-        List<PGREntity> serviceWrappers = repository.getServiceWrappers(criteria);
+        List<PGREntity> pgrEntities = repository.getServiceWrappers(criteria);
 
-        if(CollectionUtils.isEmpty(serviceWrappers))
+        if(CollectionUtils.isEmpty(pgrEntities))
             return new ArrayList<>();;
 
-        userService.enrichUsers(serviceWrappers);
-        List<PGREntity> enrichedServiceWrappers = workflowService.enrichWorkflow(requestInfo,serviceWrappers);
-        Map<Long, List<PGREntity>> sortedWrappers = new TreeMap<>(Collections.reverseOrder());
-        for(PGREntity svc : serviceWrappers){
-            if(sortedWrappers.containsKey(svc.getService().getAuditDetails().getCreatedTime())){
-                sortedWrappers.get(svc.getService().getAuditDetails().getCreatedTime()).add(svc);
+        userService.enrichUsers(pgrEntities);
+        List<PGREntity> enrichedPgrWrappers = workflowService.enrichWorkflow(requestInfo,pgrEntities);
+        Map<Long, List<PGREntity>> sortedPgrEntities = new TreeMap<>(Collections.reverseOrder());
+        for(PGREntity svc : enrichedPgrWrappers){
+            if(sortedPgrEntities.containsKey(svc.getService().getAuditDetails().getCreatedTime())){
+                sortedPgrEntities.get(svc.getService().getAuditDetails().getCreatedTime()).add(svc);
             }else{
-                List<PGREntity> serviceWrapperList = new ArrayList<>();
-                serviceWrapperList.add(svc);
-                sortedWrappers.put(svc.getService().getAuditDetails().getCreatedTime(), serviceWrapperList);
+                List<PGREntity> pgrEntityList = new ArrayList<>();
+                pgrEntityList.add(svc);
+                sortedPgrEntities.put(svc.getService().getAuditDetails().getCreatedTime(), pgrEntityList);
             }
         }
-        List<PGREntity> sortedServiceWrappers = new ArrayList<>();
-        for(Long createdTimeDesc : sortedWrappers.keySet()){
-            sortedServiceWrappers.addAll(sortedWrappers.get(createdTimeDesc));
+        List<PGREntity> sortedPgrWrappers = new ArrayList<>();
+        for(Long createdTimeDesc : sortedPgrEntities.keySet()){
+            sortedPgrWrappers.addAll(sortedPgrEntities.get(createdTimeDesc));
         }
-//        return serviceWrappers;
-        return sortedServiceWrappers;
+       //return serviceWrappers;
+        return sortedPgrWrappers;
     }
 
     /**

@@ -5,10 +5,6 @@ import org.egov.common.contract.request.RequestInfo;
 import digit.config.PGRConfiguration;
 import digit.util.UserUtil;
 import digit.web.models.*;
-import org.egov.common.contract.request.User;
-import org.egov.common.contract.user.CreateUserRequest;
-import org.egov.common.contract.user.UserDetailResponse;
-import org.egov.common.contract.user.UserSearchRequest;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
@@ -49,21 +45,21 @@ public class UserService {
     }
 
     /**
-     * Calls user search to fetch the list of user and enriches it in serviceWrappers
-     * @param serviceWrappers
+     * Calls user search to fetch the list of user and enriches it in pgrEntities
+     * @param pgrEntities
      */
-    public void enrichUsers(List<PGREntity> serviceWrappers){
+    public void enrichUsers(List<PGREntity> pgrEntities){
 
         Set<String> uuids = new HashSet<>();
 
-        serviceWrappers.forEach(serviceWrapper -> {
-            uuids.add(serviceWrapper.getService().getAccountId());
+        pgrEntities.forEach(pgrEntity -> {
+            uuids.add(pgrEntity.getService().getAccountId());
         });
 
         Map<String, User> idToUserMap = searchBulkUser(new LinkedList<>(uuids));
 
-        serviceWrappers.forEach(serviceWrapper -> {
-            serviceWrapper.getService().setCitizen(idToUserMap.get(serviceWrapper.getService().getAccountId()));
+        pgrEntities.forEach(pgrEntity -> {
+            pgrEntity.getService().setCitizen(idToUserMap.get(pgrEntity.getService().getAccountId()));
         });
 
     }
@@ -170,7 +166,7 @@ public class UserService {
     private UserDetailResponse searchUser(String stateLevelTenant, String accountId, String userName){
 
         UserSearchRequest userSearchRequest =new UserSearchRequest();
-        userSearchRequest.setActive(false);
+        userSearchRequest.setActive(true);
         userSearchRequest.setUserType(USERTYPE_CITIZEN);
         userSearchRequest.setTenantId(stateLevelTenant);
 

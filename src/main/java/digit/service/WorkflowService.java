@@ -4,15 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.config.PGRConfiguration;
 import digit.repository.PGRRepository;
 import digit.repository.ServiceRequestRepository;
-import digit.web.models.PGREntity;
-import digit.web.models.Service;
-import digit.web.models.ServiceRequest;
+import digit.web.models.*;
 import org.apache.commons.lang3.StringUtils;
 import org.egov.common.contract.models.RequestInfoWrapper;
 import org.egov.common.contract.models.Workflow;
 import org.egov.common.contract.request.RequestInfo;
-import org.egov.common.contract.request.User;
-import org.egov.common.contract.workflow.*;
+import org.egov.common.contract.workflow.BusinessService;
+import org.egov.common.contract.workflow.BusinessServiceResponse;
+import org.egov.common.contract.workflow.State;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.CollectionUtils;
@@ -70,7 +69,7 @@ public class WorkflowService {
      * */
     public String updateWorkflowStatus(ServiceRequest serviceRequest) {
         ProcessInstance processInstance = getProcessInstanceForPGR(serviceRequest);
-        ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(serviceRequest.getRequestInfo(), Collections.singletonList(processInstance));
+        digit.web.models.ProcessInstanceRequest workflowRequest = new ProcessInstanceRequest(serviceRequest.getRequestInfo(), Collections.singletonList(processInstance));
         State state = callWorkFlow(workflowRequest);
         serviceRequest.getPgrEntity().getService().setApplicationStatus(state.getApplicationStatus());
         return state.getApplicationStatus();

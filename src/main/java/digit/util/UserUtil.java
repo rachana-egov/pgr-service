@@ -2,10 +2,10 @@ package digit.util;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import digit.repository.ServiceRequestRepository;
+import digit.web.models.User;
+import digit.web.models.UserDetailResponse;
 import org.egov.common.contract.request.Role;
 import digit.config.PGRConfiguration;
-import org.egov.common.contract.request.User;
-import org.egov.common.contract.user.UserDetailResponse;
 import org.egov.tracer.model.CustomException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
